@@ -15,11 +15,13 @@ def parse_track_string(track):
     """Parses a track string and returns the name and time."""
     # Parse the relevant information out of the tracks.
     track = track.rstrip()
+    # TODO: Use csv reader here.
     track_info = track.split('\t')
     if len(track_info) < 4:
         raise ValueError(
                 'Not enough fields for track {}, skipping.'.format(track))
 
+    # TODO: Add these indices as arguments.
     name = track_info[1]
     time_string = track_info[3]
     logger.debug('Got name %s and time %s.', name, time_string)
@@ -105,6 +107,7 @@ if __name__ == '__main__':
 
     track_times = []
     names = []
+    # TODO: Add ability to get performers by parsing track file.
     performers = []
     for track in args.track_list:
         try:
