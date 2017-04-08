@@ -44,6 +44,29 @@ def parse_track_string(track):
 
     return name, datetime.timedelta(seconds=total_seconds)
 
+def create_cue_sheet(names, track_times,
+                     start_time=datetime.timedelta(seconds=0)):
+    """Yields the next cue sheet entry given the track names, times.
+
+    Args:
+        names: List of track names.
+        track_times: List of timdeltas containing the track times.
+        start_time: The initial time to start the first track at.
+
+    The lengths of names and track times should be the same.
+    """
+    accumulated_time = start
+    for track_index, name_and_track in enumerate(zip(names, track_times)):
+        name, track = name_and_track
+        minutes = int(accumulated_time.total_seconds() / 60)
+        seconds = int(accumulated_time.total_seconds() % 60)
+
+        cue_sheet_entry = '''  TRACK {:02} AUDIO
+    TITLE {}
+    INDEX 01 {:02d}:{:02d}:00'''.format(track_index, name, minutes, seconds)
+        accumulated_time += track
+        yield cue_sheet_entry
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
@@ -58,12 +81,5 @@ if __name__ == '__main__':
         except ValueError as v:
             logger.error(v)
 
-    accumulated_time = start
-    for track_index, name_and_track in enumerate(zip(names, track_times)):
-        name, track = name_and_track
-        minutes = int(accumulated_time.total_seconds() / 60)
-        seconds = int(accumulated_time.total_seconds() % 60)
-        print('  TRACK {:02} AUDIO'.format(track_index))
-        print('    TITLE {}'.format(name))
-        print('    INDEX 01 {:02d}:{:02d}:00'.format(minutes, seconds))
-        accumulated_time += track
+    for cue_sheet_entry in create_cue_sheet(names, track_times, start):
+        print(cue_sheet_entry)
