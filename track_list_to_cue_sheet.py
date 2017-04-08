@@ -8,7 +8,6 @@ __copyright__ = '2016, karepker@gmail.com (Kar Epker)'
 import datetime
 import logging
 import sys
-import time
 
 def parse_track_string(track):
     """Parses a track string and returns the name and time."""
