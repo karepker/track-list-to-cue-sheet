@@ -6,24 +6,27 @@ __author__ = 'Kar Epker'
 __copyright__ = '2016, karepker@gmail.com (Kar Epker)'
 
 import argparse
+import csv
 import datetime
 import logging
 import os
 import sys
 
 def parse_track_string(track):
-    """Parses a track string and returns the name and time."""
-    # Parse the relevant information out of the tracks.
-    track = track.rstrip()
-    # TODO: Use csv reader here.
-    track_info = track.split('\t')
-    if len(track_info) < 4:
+    """Parses a track string and returns the name and time.
+
+    Args:
+        track: A csv row read in.
+
+    The time is returned in a timedelta object representing its duration.
+    """
+    if len(track) < 4:
         raise ValueError(
                 'Not enough fields for track {}, skipping.'.format(track))
 
     # TODO: Add these indices as arguments.
-    name = track_info[1]
-    time_string = track_info[3]
+    name = track[1]
+    time_string = track[3]
     logger.debug('Got name %s and time %s.', name, time_string)
 
     # Read the time portion of the string
@@ -109,7 +112,7 @@ if __name__ == '__main__':
     names = []
     # TODO: Add ability to get performers by parsing track file.
     performers = []
-    for track in args.track_list:
+    for track in csv.reader(args.track_list, delimiter='\t'):
         try:
             name, track_time = parse_track_string(track)
             names.append(name)
