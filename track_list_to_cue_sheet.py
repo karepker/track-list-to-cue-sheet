@@ -5,8 +5,10 @@ Generates a cue file based on a track list.
 __author__ = 'Kar Epker'
 __copyright__ = '2016, karepker@gmail.com (Kar Epker)'
 
+import argparse
 import datetime
 import logging
+import os
 import sys
 
 def parse_track_string(track):
@@ -67,12 +69,37 @@ def create_cue_sheet(names, track_times,
         yield cue_sheet_entry
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    parser = argparse.ArgumentParser(description='Creates a cue sheet given '
+                                     'a track list.')
+    parser.add_argument('track_list', nargs='?', type=argparse.FileType('r'),
+            default=sys.stdin, help='File to segment (default standard input).')
+    parser.add_argument('--performer', dest='performer',
+            help='The performer to be attributed by PERFORMER.')
+    parser.add_argument('--start-seconds', dest='start_seconds', type=int,
+                        default=0, help='Start time of the first track in '
+                        'seconds.')
+    parser.add_argument('--title', dest='title', help='Title of the disc.')
+    parser.add_argument('--rem', dest='rem', nargs='*', help='Rem attributes. '
+                        'Specify as, e.g. "GENRE Pop"')
+    parser.add_argument('--audio-file', dest='audio_file', required=True,
+                        type=argparse.FileType('r'),
+                        help='The audio file corresponding to cue sheet this '
+                        'script will generate. This file will be used to infer '
+                        'its name for the cue sheet FILE attribute.')
+    parser.add_argument('--output-file', dest='output_file', default=sys.stdout,
+                        type=argparse.FileType('w'),
+                        help='The location to print the output cue file. '
+                        'By default, stdout.')
+    args = parser.parse_args()
+
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
     logger = logging.getLogger(__name__)
-    start = datetime.timedelta(seconds=50)
+
+    start = datetime.timedelta(seconds=args.start_seconds)
+
     track_times = []
     names = []
-    for track in sys.stdin:
+    for track in args.track_list:
         try:
             name, track_time = parse_track_string(track)
             names.append(name)
@@ -80,5 +107,18 @@ if __name__ == '__main__':
         except ValueError as v:
             logger.error(v)
 
-    for cue_sheet_entry in create_cue_sheet(names, track_times, start):
-        print(cue_sheet_entry)
+    output_file = args.output_file
+
+    output_file.writelines('REM {}\n'.format(rem) for rem in args.rem)
+
+    audio_file_name = os.path.basename(args.audio_file.name)
+    audio_file_extension = os.path.splitext(args.audio_file.name)[1][1:].upper()
+    output_file.writelines('FILE "{}" {}\n'.format(audio_file_name,
+                                                 audio_file_extension))
+
+    if args.title:
+        output_file.writelines('TITLE {}\n'.format(args.title))
+
+    output_file.writelines(
+        '{}\n'.format(cue_entry) for cue_entry in create_cue_sheet(
+                names, track_times, start))
