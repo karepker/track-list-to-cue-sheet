@@ -120,13 +120,13 @@ if __name__ == '__main__':
     output_file.writelines('REM {}\n'.format(rem) for rem in args.rem)
     output_file.writelines('PERFORMER {}\n'.format(args.performer))
 
+    if args.title:
+        output_file.writelines('TITLE {}\n'.format(args.title))
+
     audio_file_name = os.path.basename(args.audio_file.name)
     audio_file_extension = os.path.splitext(args.audio_file.name)[1][1:].upper()
     output_file.writelines('FILE "{}" {}\n'.format(audio_file_name,
                                                  audio_file_extension))
-
-    if args.title:
-        output_file.writelines('TITLE {}\n'.format(args.title))
 
     output_file.writelines(
         '{}\n'.format(cue_entry) for cue_entry in create_cue_sheet(
