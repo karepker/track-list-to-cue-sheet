@@ -62,12 +62,10 @@ def create_cue_sheet(names, perfomers, track_times,
 
     The lengths of names and track times should be the same.
     """
-    accumulated_time = start
+    accumulated_time = start_time
 
-    for track_index, name_and_performer_and_track in enumerate(
+    for track_index, (name, performer, track_time) in enumerate(
             zip(names, performers, track_times)):
-        name, performer, track = name_and_performer_and_track
-        #print(name_and_performer_and_track)
         minutes = int(accumulated_time.total_seconds() / 60)
         seconds = int(accumulated_time.total_seconds() % 60)
 
@@ -76,7 +74,7 @@ def create_cue_sheet(names, perfomers, track_times,
     PERFORMER {}
     INDEX 01 {:02d}:{:02d}:00'''.format(track_index, name, performer, minutes,
                                         seconds)
-        accumulated_time += track
+        accumulated_time += track_time
         yield cue_sheet_entry
 
 if __name__ == '__main__':
