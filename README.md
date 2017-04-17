@@ -11,6 +11,41 @@ This script only supports tab separated value (tsv) track lists with the track
 name in column 1 (0-indexed) and elapsed time of the track in column 3. See
 below for an example.
 
+## Options
+
+Generated from running `python track_list_to_cue_sheet.py -h`
+
+```text
+usage: track_list_to_cue_sheet.py [-h] --performer PERFORMER
+                                  [--start-seconds START_SECONDS]
+                                  [--title TITLE] [--rem [REM [REM ...]]]
+                                  --audio-file AUDIO_FILE
+                                  [--output-file OUTPUT_FILE]
+                                  [track_list]
+
+Creates a cue sheet given a track list.
+
+positional arguments:
+  track_list            File to segment (default standard input).
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --performer PERFORMER
+                        The performer to be attributed by PERFORMER.
+  --start-seconds START_SECONDS
+                        Start time of the first track in seconds.
+  --title TITLE         Title of the disc.
+  --rem [REM [REM ...]]
+                        Rem attributes. Specify as, e.g. "GENRE Pop"
+  --audio-file AUDIO_FILE
+                        The audio file corresponding to cue sheet this script
+                        will generate. This file will be used to infer its
+                        name for the cue sheet FILE attribute.
+  --output-file OUTPUT_FILE
+                        The location to print the output cue file. By default,
+                        stdout.
+```
+
 ## Example usage
 
 I wrote this script because I had a single long audio file I had ripped from the
