@@ -5,12 +5,14 @@ Generates a cue file based on a track list.
 __author__ = 'Kar Epker'
 __copyright__ = '2016, karepker@gmail.com (Kar Epker)'
 
+
 import argparse
 import csv
 import datetime
 import logging
 import os
 import sys
+
 
 def parse_track_string(track):
     """Parses a track string and returns the name and time.
@@ -50,6 +52,7 @@ def parse_track_string(track):
 
     return name, datetime.timedelta(seconds=total_seconds)
 
+
 def create_cue_sheet(names, perfomers, track_times,
                      start_time=datetime.timedelta(seconds=0)):
     """Yields the next cue sheet entry given the track names, times.
@@ -76,6 +79,7 @@ def create_cue_sheet(names, perfomers, track_times,
                                         seconds)
         accumulated_time += track_time
         yield cue_sheet_entry
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Creates a cue sheet given '
