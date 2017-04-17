@@ -29,6 +29,8 @@ def parse_track_string(track):
     # TODO: Add these indices as arguments.
     name = track[1]
     time_string = track[3]
+
+    logger = logging.getLogger(__name__)
     logger.debug('Got name %s and time %s.', name, time_string)
 
     # Read the time portion of the string
@@ -46,14 +48,15 @@ def parse_track_string(track):
     # Invalid time value
     except ValueError:
         raise ValueError(
-            'Skipping track {} with unparseable time.'.format(track))
+            'Skipping track {} with unparseable time {}.'.format(track,
+                                                                 time_string))
 
     logger.debug('Parsed %d seconds for track "%s".', total_seconds, track)
 
     return name, datetime.timedelta(seconds=total_seconds)
 
 
-def create_cue_sheet(names, perfomers, track_times,
+def create_cue_sheet(names, performers, track_times,
                      start_time=datetime.timedelta(seconds=0)):
     """Yields the next cue sheet entry given the track names, times.
 
