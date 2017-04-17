@@ -13,7 +13,7 @@ below for an example.
 
 ## Example usage
 
-I wrote this script because I had a single long audio file I had ripped from
+I wrote this script because I had a single long audio file I had ripped from the
 _Rockapella: Live in Concert_ DVD and wanted to convert it to single audio
 files without having to manually find and split out each one.
 
