@@ -4,8 +4,8 @@ This is a simple script that converts list of tracks with elapsed time to a [cue
 sheet], which is used to describe the tracks in a single audio/video file or
 disc.
 
-Personally, I use it to split a single audio track into its component tracks via
-some program like [mp3splt].
+Personally, I use it to generate a cue sheets to allow splitting of a single
+audio track into their component tracks using, e.g. [mp3splt].
 
 This script only supports tab separated value (tsv) track lists with the track
 name in column 1 (0-indexed) and elapsed time of the track in column 3. See
