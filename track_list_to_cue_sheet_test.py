@@ -21,12 +21,16 @@ class TrackListToCueSheetTest(unittest.TestCase):
 
         # Normal condition.
         self.assertEqual(
-            parse_track_string(['1.', 'Name', 'Irrelevant', '1:00']),
+            parse_track_string(['1.', 'Name', 'Irrelevant', '1:00'], 1, 3),
+            ('Name', timedelta(seconds=60)))
+
+        self.assertEqual(
+            parse_track_string(['1.', '1:00', 'Name', ], 2, 1),
             ('Name', timedelta(seconds=60)))
 
         # Not enough fields.
         with self.assertRaises(ValueError):
-            parse_track_string('1.\tName\tIrrelevant\t')
+            parse_track_string(['1.', 'Name', 'Irrelevant'], 1, 3)
 
     def test_create_cue_sheet(self):
         """Tests the cue sheet creation functionality."""

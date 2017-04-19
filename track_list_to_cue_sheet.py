@@ -14,21 +14,23 @@ import os
 import sys
 
 
-def parse_track_string(track):
+def parse_track_string(track, name_index, time_index):
     """Parses a track string and returns the name and time.
 
     Args:
         track: A csv row read in.
-
-    The time is returned in a timedelta object representing its duration.
+        name_index: The index in the csv row that contains the track name.
+        time_index: The index in the csv row that contains the track's elapsed
+                    time.
+    Raises: A ValueError if there are not enough entries in the row.
+    Returns: The name of the track and its duration as a timedelta.
     """
-    if len(track) < 4:
+    if len(track) < max(name_index, time_index) + 1:
         raise ValueError(
                 'Not enough fields for track {}, skipping.'.format(track))
 
-    # TODO: Add these indices as arguments.
-    name = track[1]
-    time_string = track[3]
+    name = track[name_index]
+    time_string = track[time_index]
 
     logger = logging.getLogger(__name__)
     logger.debug('Got name %s and time %s.', name, time_string)
@@ -89,6 +91,12 @@ if __name__ == '__main__':
                                      'a track list.')
     parser.add_argument('track_list', nargs='?', type=argparse.FileType('r'),
             default=sys.stdin, help='File to segment (default standard input).')
+    parser.add_argument('--name-index', dest='name_index', default=1, type=int,
+                        help='The index in the track list containing the track '
+                        'name.')
+    parser.add_argument('--time-index', dest='time_index', default=3, type=int,
+                        help='The index in the track list containing the '
+                        'track\'s elapsed time.')
     parser.add_argument('--performer', dest='performer', required=True,
             help='The performer to be attributed by PERFORMER.')
     parser.add_argument('--start-seconds', dest='start_seconds', type=int,
@@ -119,7 +127,8 @@ if __name__ == '__main__':
     performers = []
     for track in csv.reader(args.track_list, delimiter='\t'):
         try:
-            name, track_time = parse_track_string(track)
+            name, track_time = parse_track_string(track, args.name_index,
+                                                  args.time_index)
             names.append(name)
             performers.append(args.performer)
             track_times.append(track_time)

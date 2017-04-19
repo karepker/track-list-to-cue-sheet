@@ -62,7 +62,7 @@ Here is the command I used for the example.
 ```shell
 python track_list_to_cue_sheet.py /tmp/rockapella_in_concert.txt \
 --performer Rockapella --title "In Concert" --start-seconds 50 \
---rem "GENRE Pop" "DATE 2001" \
+--rem "GENRE Pop" "DATE 2001" --name-index 1 --time-index 3 \
 --audio-file="/home/karepker/Downloads/Rockapella Live in Concert.mp3" \
 --output-file="/home/karepker/Downloads/Rockapella Live in Concert.cue"
 ```
