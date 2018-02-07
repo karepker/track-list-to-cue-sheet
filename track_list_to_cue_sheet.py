@@ -92,11 +92,11 @@ if __name__ == '__main__':
     parser.add_argument('track_list', nargs='?', type=argparse.FileType('r'),
             default=sys.stdin, help='File to segment (default standard input).')
     parser.add_argument('--name-index', dest='name_index', default=1, type=int,
-                        help='The index in the track list containing the track '
-                        'name.')
+                        help='The index of the column in the track list '
+                        'containing the track name.')
     parser.add_argument('--time-index', dest='time_index', default=3, type=int,
-                        help='The index in the track list containing the '
-                        'track\'s elapsed time.')
+                        help='The index of the column in the track list '
+                        'containing the track\'s elapsed time.')
     parser.add_argument('--performer', dest='performer', required=True,
             help='The performer to be attributed by PERFORMER.')
     parser.add_argument('--start-seconds', dest='start_seconds', type=int,
@@ -114,9 +114,18 @@ if __name__ == '__main__':
                         type=argparse.FileType('w'),
                         help='The location to print the output cue file. '
                         'By default, stdout.')
+    parser.add_argument('--debug', dest='log_level', default=logging.WARNING,
+                        action='store_const', const=logging.DEBUG,
+                        help='Print debug log statements.')
+    parser.add_argument('--dummy', dest='dummy', action='store_true',
+                        help='Add dummy track at the end (true by default).')
+    parser.add_argument('--no-dummy', dest='dummy', action='store_false',
+                        help='Do not add dummy track at the end.')
+
+    parser.set_defaults(dummy=True)
     args = parser.parse_args()
 
-    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    logging.basicConfig(stream=sys.stderr, level=args.log_level)
     logger = logging.getLogger(__name__)
 
     start = datetime.timedelta(seconds=args.start_seconds)
@@ -134,6 +143,12 @@ if __name__ == '__main__':
             track_times.append(track_time)
         except ValueError as v:
             logger.error(v)
+
+    # The dummy track is required to make mp3splt split the last track.
+    if args.dummy:
+        names.append("Dummy track")
+        performers.append(args.performer)
+        track_times.append(datetime.timedelta(seconds=0))
 
     output_file = args.output_file
 

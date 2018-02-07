@@ -16,11 +16,13 @@ below for an example.
 Generated from running `python track_list_to_cue_sheet.py -h`
 
 ```text
-usage: track_list_to_cue_sheet.py [-h] --performer PERFORMER
-                                  [--start-seconds START_SECONDS]
+usage: track_list_to_cue_sheet.py [-h] [--name-index NAME_INDEX]
+                                  [--time-index TIME_INDEX] --performer
+                                  PERFORMER [--start-seconds START_SECONDS]
                                   [--title TITLE] [--rem [REM [REM ...]]]
                                   --audio-file AUDIO_FILE
-                                  [--output-file OUTPUT_FILE]
+                                  [--output-file OUTPUT_FILE] [--debug]
+                                  [--dummy] [--no-dummy]
                                   [track_list]
 
 Creates a cue sheet given a track list.
@@ -30,6 +32,12 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --name-index NAME_INDEX
+                        The index of the column in the track list containing
+                        the track name.
+  --time-index TIME_INDEX
+                        The index of the column in the track list containing
+                        the track's elapsed time.
   --performer PERFORMER
                         The performer to be attributed by PERFORMER.
   --start-seconds START_SECONDS
@@ -44,6 +52,9 @@ optional arguments:
   --output-file OUTPUT_FILE
                         The location to print the output cue file. By default,
                         stdout.
+  --debug               Print debug log statements.
+  --dummy               Add dummy track at the end (true by default).
+  --no-dummy            Do not add dummy track at the end.
 ```
 
 ## Example usage
@@ -61,10 +72,10 @@ Here is the command I used for the example.
 
 ```shell
 python track_list_to_cue_sheet.py /tmp/rockapella_in_concert.txt \
---performer Rockapella --title "In Concert" --start-seconds 50 \
---rem "GENRE Pop" "DATE 2001" --name-index 1 --time-index 3 \
---audio-file="/home/karepker/Downloads/Rockapella Live in Concert.mp3" \
---output-file="/home/karepker/Downloads/Rockapella Live in Concert.cue"
+  --performer Rockapella --title "In Concert" --start-seconds 50 \
+  --rem "GENRE Pop" "DATE 2001" --name-index 1 --time-index 3 \
+  --audio-file="/home/karepker/Downloads/Rockapella Live in Concert.mp3" \
+  --output-file="/home/karepker/Downloads/Rockapella Live in Concert.cue"
 ```
 
 The contents of `/tmp/rockapella_in_concert.txt` are included below.
@@ -187,7 +198,7 @@ FILE "Rockapella Live in Concert.mp3" MP3
     PERFORMER Rockapella
     INDEX 01 66:16:00
   TRACK 21 AUDIO
-    TITLE Long Cool Woman in a Black Dress
+    TITLE Dummy track
     PERFORMER Rockapella
     INDEX 01 71:13:00
 ```
