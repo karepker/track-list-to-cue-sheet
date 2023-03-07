@@ -58,6 +58,39 @@ def parse_track_string(track, name_index, time_index):
     return name, datetime.timedelta(seconds=total_seconds)
 
 
+def parse_tracks_with_track_time_diffs(tracks, name_index, time_index):
+    """Parses track times, names, and performers from given track iterable.
+
+    This function is expected to be called in cases where the time described by
+    each row tells the runtime of that particular track, not the cumulative
+    runtime.
+
+    Args:
+        tracks: Iterable of tracks to loop over.
+        name_index: The column index of the track name.
+        time_index: The column index of the time the track takes.
+
+    Raises: A ValueError if a track could not be parsed.
+    Returns: A tuple of the list of track times as timedeltas, the names of the
+    tracks, and a list of the performers in each track.
+    """
+    track_times = []
+    names = []
+    # TODO: Add ability to get performers by parsing track file.
+    performers = []
+    for track in csv.reader(args.track_list, delimiter='\t'):
+        try:
+            name, track_time = parse_track_string(track, args.name_index,
+                                                  args.time_index)
+            names.append(name)
+            performers.append(args.performer)
+            track_times.append(track_time)
+        except ValueError as v:
+            logger.error(v)
+
+    return track_times, names, performers
+
+
 def create_cue_sheet(names, performers, track_times,
                      start_time=datetime.timedelta(seconds=0)):
     """Yields the next cue sheet entry given the track names, times.
@@ -130,19 +163,9 @@ if __name__ == '__main__':
 
     start = datetime.timedelta(seconds=args.start_seconds)
 
-    track_times = []
-    names = []
-    # TODO: Add ability to get performers by parsing track file.
-    performers = []
-    for track in csv.reader(args.track_list, delimiter='\t'):
-        try:
-            name, track_time = parse_track_string(track, args.name_index,
-                                                  args.time_index)
-            names.append(name)
-            performers.append(args.performer)
-            track_times.append(track_time)
-        except ValueError as v:
-            logger.error(v)
+    track_times, names, performers = parse_tracks_with_track_time_diffs(
+            csv.reader(args.track_list, delimiter='\t'), args.name_index,
+            args.time_index)
 
     # The dummy track is required to make mp3splt split the last track.
     if args.dummy:
