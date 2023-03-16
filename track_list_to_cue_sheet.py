@@ -75,49 +75,38 @@ def parse_tracks_with_track_time_diffs(tracks, name_index, time_index,
             added. mp3splt requires this to split the last track.
 
     Raises: A ValueError if a track could not be parsed.
-    Returns: A tuple of
-        * the list of track times as timedeltas from the start time,
-        * the names of the tracks,
-        * and a list of the performers in each track.
+    Yields: A 3-tuple of track metadata:
+        * Timedelta representing the start of the track.
+        * Name.
+        * List of performers for the track.
     """
-    track_times = []
-    names = []
-    # TODO: Add ability to get performers by parsing track file.
-    performers = []
     accumulated_time = start_time
     for track in csv.reader(args.track_list, delimiter='\t'):
         try:
             name, track_time = parse_track_string(track, args.name_index,
                                                   args.time_index)
 
-            names.append(name)
-            performers.append(args.performer)
-            track_times.append(accumulated_time)
+            # TODO: Add ability to get performers by parsing track file.
+            yield (accumulated_time, name, args.performer)
             accumulated_time += track_time
         except ValueError as v:
             logger.error(v)
 
     # The dummy track is required to make mp3splt split the last track.
     if dummy:
-        names.append("Dummy track")
-        performers.append(args.performer)
-        track_times.append(accumulated_time)
-
-    return track_times, names, performers
+        yield (accumulated_time, "Dummy track", args.performer)
 
 
-def create_cue_sheet(names, performers, track_times):
+def create_cue_sheet(tracks):
     """Yields the next cue sheet entry given the track names, times.
 
     Args:
-        names: List of track names.
-        track_times: List of timdeltas containing the track times.
-        performers: List of performers to associate with each cue entry.
-
-    The lengths of names and track times should be the same.
+        tracks: An iterable of 3-tuples containing metadata about each track:
+            * Name.
+            * Timedelta representing the start of the track.
+            * List of performers for the track.
     """
-    for track_index, (name, performer, track_time) in enumerate(
-            zip(names, performers, track_times)):
+    for track_index, (track_time, name, performer) in enumerate(tracks):
         minutes = int(track_time.total_seconds() / 60)
         seconds = int(track_time.total_seconds() % 60)
 
@@ -173,7 +162,7 @@ if __name__ == '__main__':
 
     start = datetime.timedelta(seconds=args.start_seconds)
 
-    track_times, names, performers = parse_tracks_with_track_time_diffs(
+    tracks = parse_tracks_with_track_time_diffs(
             csv.reader(args.track_list, delimiter='\t'), args.name_index,
             args.time_index, start, args.dummy)
 
@@ -191,5 +180,4 @@ if __name__ == '__main__':
                                                  audio_file_extension))
 
     output_file.writelines(
-        '{}\n'.format(cue_entry) for cue_entry in create_cue_sheet(
-                names, performers, track_times))
+        '{}\n'.format(cue_entry) for cue_entry in create_cue_sheet(tracks))
