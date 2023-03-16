@@ -58,7 +58,8 @@ def parse_track_string(track, name_index, time_index):
     return name, datetime.timedelta(seconds=total_seconds)
 
 
-def parse_tracks_with_track_time_diffs(tracks, name_index, time_index):
+def parse_tracks_with_track_time_diffs(tracks, name_index, time_index,
+                                       start_time, dummy):
     """Parses track times, names, and performers from given track iterable.
 
     This function is expected to be called in cases where the time described by
@@ -69,53 +70,62 @@ def parse_tracks_with_track_time_diffs(tracks, name_index, time_index):
         tracks: Iterable of tracks to loop over.
         name_index: The column index of the track name.
         time_index: The column index of the time the track takes.
+        start_time: The initial time to start the first track at.
+        dummy: Whether a dummy track to mark the end of the last track should be
+            added. mp3splt requires this to split the last track.
 
     Raises: A ValueError if a track could not be parsed.
-    Returns: A tuple of the list of track times as timedeltas, the names of the
-    tracks, and a list of the performers in each track.
+    Returns: A tuple of
+        * the list of track times as timedeltas from the start time,
+        * the names of the tracks,
+        * and a list of the performers in each track.
     """
     track_times = []
     names = []
     # TODO: Add ability to get performers by parsing track file.
     performers = []
+    accumulated_time = start_time
     for track in csv.reader(args.track_list, delimiter='\t'):
         try:
             name, track_time = parse_track_string(track, args.name_index,
                                                   args.time_index)
+
             names.append(name)
             performers.append(args.performer)
-            track_times.append(track_time)
+            track_times.append(accumulated_time)
+            accumulated_time += track_time
         except ValueError as v:
             logger.error(v)
+
+    # The dummy track is required to make mp3splt split the last track.
+    if dummy:
+        names.append("Dummy track")
+        performers.append(args.performer)
+        track_times.append(accumulated_time)
 
     return track_times, names, performers
 
 
-def create_cue_sheet(names, performers, track_times,
-                     start_time=datetime.timedelta(seconds=0)):
+def create_cue_sheet(names, performers, track_times):
     """Yields the next cue sheet entry given the track names, times.
 
     Args:
         names: List of track names.
         track_times: List of timdeltas containing the track times.
         performers: List of performers to associate with each cue entry.
-        start_time: The initial time to start the first track at.
 
     The lengths of names and track times should be the same.
     """
-    accumulated_time = start_time
-
     for track_index, (name, performer, track_time) in enumerate(
             zip(names, performers, track_times)):
-        minutes = int(accumulated_time.total_seconds() / 60)
-        seconds = int(accumulated_time.total_seconds() % 60)
+        minutes = int(track_time.total_seconds() / 60)
+        seconds = int(track_time.total_seconds() % 60)
 
         cue_sheet_entry = '''  TRACK {:02} AUDIO
     TITLE {}
     PERFORMER {}
     INDEX 01 {:02d}:{:02d}:00'''.format(track_index, name, performer, minutes,
                                         seconds)
-        accumulated_time += track_time
         yield cue_sheet_entry
 
 
@@ -165,13 +175,7 @@ if __name__ == '__main__':
 
     track_times, names, performers = parse_tracks_with_track_time_diffs(
             csv.reader(args.track_list, delimiter='\t'), args.name_index,
-            args.time_index)
-
-    # The dummy track is required to make mp3splt split the last track.
-    if args.dummy:
-        names.append("Dummy track")
-        performers.append(args.performer)
-        track_times.append(datetime.timedelta(seconds=0))
+            args.time_index, start, args.dummy)
 
     output_file = args.output_file
 
@@ -188,4 +192,4 @@ if __name__ == '__main__':
 
     output_file.writelines(
         '{}\n'.format(cue_entry) for cue_entry in create_cue_sheet(
-                names, performers, track_times, start))
+                names, performers, track_times))
