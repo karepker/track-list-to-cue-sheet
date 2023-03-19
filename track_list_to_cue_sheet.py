@@ -37,46 +37,40 @@ def parse_time_string(time_string):
 
     return datetime.timedelta(seconds=total_seconds)
 
-
-def parse_track_string(track, name_index, time_index):
+def parse_track_string(track):
     """Parses a track string and returns the name and time.
 
     Args:
         track: A csv row read in.
-        name_index: The index in the csv row that contains the track name.
-        time_index: The index in the csv row that contains the track's elapsed
-                    time.
     Raises: A ValueError if there are not enough entries in the row.
-    Returns: The name of the track and its duration as a timedelta.
+    Returns: The name of the track, its duration as a timedelta, and the
+        performer for the track.
     """
-    if len(track) < max(name_index, time_index) + 1:
+    sanitized_performer_index = (args.performer_index if args.performer_index
+                                 else 0)
+    if len(track) < (max(args.name_index, args.time_index,
+                        args.performer_index if args.performer_index else 0) +
+                     1):
         raise ValueError(
                 'Not enough fields for track {}, skipping.'.format(track))
 
-    name = track[name_index]
-    time_string = track[time_index]
+    name = track[args.name_index]
+    time_string = track[args.time_index]
+    performer = (track[args.performer_index] if args.performer_index
+                 else args.performer)
 
     logger = logging.getLogger(__name__)
-    logger.debug('Got name %s and time %s.', name, time_string)
+    logger.debug('Got name %s, time %s, and performer %s.', name, time_string,
+                 performer)
 
-    return name, parse_time_string(time_string)
+    return name, parse_time_string(time_string), performer
 
 
-def parse_tracks(tracks, name_index, time_index, start_time, end_time,
-                 track_times_are_timestamps, should_add_dummy):
+def parse_tracks(tracks):
     """Parses track metadata from given track iterable.
 
     Args:
         tracks: Iterable of tracks to loop over.
-        name_index: The column index of the track name.
-        time_index: The column index of the time the track takes.
-        start_time: The initial time to start the first track at.
-        end_time: The end time of the associated audio.
-        track_times_are_timestamps: Whether the time associated with a track
-            represents the track runtime or is a timestamp.
-        should_add_dummy: Whether a dummy track to mark the end of the last
-            track should be added. mp3splt requires this to split the last
-            track.
 
     Raises: A ValueError if a track could not be parsed.
     Yields: A 3-tuple of track metadata:
@@ -84,25 +78,23 @@ def parse_tracks(tracks, name_index, time_index, start_time, end_time,
         * Name.
         * List of performers for the track.
     """
-    accumulated_time = start_time
+    accumulated_time = args.start_time
     for track in csv.reader(args.track_list, delimiter='\t'):
         try:
-            name, track_time = parse_track_string(track, args.name_index,
-                                                  args.time_index)
+            name, track_time, performer = parse_track_string(track)
 
-            # TODO: Add ability to get performers by parsing track file.
-            if track_times_are_timestamps:
-                yield (track_time, name, args.performer)
+            if args.timestamp:
+                yield (track_time, name, performer)
             else:
-                yield (accumulated_time, name, args.performer)
+                yield (accumulated_time, name, performer)
                 accumulated_time += track_time
         except ValueError as v:
             logger.error(v)
 
     # The dummy track is required to make mp3splt split the last track.
-    if should_add_dummy:
-        if track_times_are_timestamps:
-            yield (end_time, "Dummy track", args.performer)
+    if args.dummy:
+        if args.timestamp:
+            yield (args.end_time, "Dummy track", args.performer)
         else:
             yield (accumulated_time, "Dummy track", args.performer)
 
@@ -133,14 +125,23 @@ if __name__ == '__main__':
                                      'a track list.')
     parser.add_argument('track_list', nargs='?', type=argparse.FileType('r'),
             default=sys.stdin, help='File to segment (default standard input).')
-    parser.add_argument('--name-index', dest='name_index', default=1, type=int,
+    parser.add_argument('--name-index', dest='name_index', type=int,
+                        required=True,
                         help='The index of the column in the track list '
                         'containing the track name.')
-    parser.add_argument('--time-index', dest='time_index', default=3, type=int,
+    parser.add_argument('--time-index', dest='time_index', required=True,
+                        type=int,
                         help='The index of the column in the track list '
                         'containing the track\'s elapsed time.')
+    parser.add_argument('--performer-index', dest='performer_index',
+                        type=int,
+                        help='The index of the column in the track list '
+                        'containing the track\'s performers. If not given, '
+                        'defaults to the performer ')
     parser.add_argument('--performer', dest='performer', required=True,
-            help='The performer to be attributed by PERFORMER.')
+                        help='The performer to be attributed at the album '
+                             'level. Will also be used for individual tracks '
+                             'unless a performer index is given.')
     parser.add_argument('--start-time', dest='start_time',
                         type=parse_time_string,
                         default=datetime.timedelta(seconds=0),
@@ -182,14 +183,7 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=args.log_level)
     logger = logging.getLogger(__name__)
 
-    tracks = parse_tracks(
-            tracks=csv.reader(args.track_list, delimiter='\t'),
-            name_index=args.name_index,
-            time_index=args.time_index,
-            start_time=args.start_time,
-            end_time=args.end_time,
-            track_times_are_timestamps=args.timestamp,
-            should_add_dummy=args.dummy)
+    tracks = parse_tracks(csv.reader(args.track_list, delimiter='\t'))
 
     output_file = args.output_file
 

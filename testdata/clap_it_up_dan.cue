@@ -60,8 +60,8 @@ FILE "clap_it_up_dan.mp3" MP3
     PERFORMER Clap It Up Dan
     INDEX 01 48:36:00
   TRACK 14 AUDIO
-    TITLE What a Beautiful Day (feat. JourneyDay)
-    PERFORMER Clap It Up Dan
+    TITLE What a Beautiful Day
+    PERFORMER Clap It Up Dan, JourneyDay
     INDEX 01 52:47:00
   TRACK 15 AUDIO
     TITLE There's a Light

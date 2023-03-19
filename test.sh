@@ -23,7 +23,8 @@ fi
 python track_list_to_cue_sheet.py testdata/clap_it_up_dan.tsv \
   --performer "Clap It Up Dan" --title "Covers 2020–2021" \
   --timestamp --end-time 1:14:22 --rem "GENRE Christian" "DATE 2021" \
-  --name-index 1 --time-index 0 --audio-file="testdata/clap_it_up_dan.mp3" \
+  --name-index 1 --time-index 0 --performer-index 2 \
+  --audio-file="testdata/clap_it_up_dan.mp3" \
   | diff - testdata/clap_it_up_dan.cue
 
 if (( $? == 0 )); then
