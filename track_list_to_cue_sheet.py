@@ -114,7 +114,7 @@ def create_cue_sheet(tracks):
         cue_sheet_entry = '''  TRACK {:02} AUDIO
     TITLE {}
     PERFORMER {}
-    INDEX 01 {:02d}:{:02d}:00'''.format(track_index, name, performer, minutes,
+    INDEX 01 {:02d}:{:02d}:00'''.format(track_index + 1, name, performer, minutes,
                                         seconds)
         yield cue_sheet_entry
 
