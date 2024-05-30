@@ -13,6 +13,12 @@ import os
 import sys
 
 
+# As given in
+# https://github.com/libyal/libodraw/blob/main/documentation/CUE%20sheet%20format.asciidoc#61-msf
+_FRAMES_PER_SECOND = 75
+_MS_PER_SECOND = 1000
+
+
 def parse_time_string(time_string):
     """Parses time string consisting of [hh:mm:]ss into a timedelta object.
 
@@ -27,14 +33,26 @@ def parse_time_string(time_string):
     # Pad split_time_string with explicit values of 0 for hours and minutes if
     # they are not provided.
     time_parts = ['0'] * (3 - len(split_time_string)) + split_time_string
-    hours, minutes, seconds = time_parts
-    total_seconds = (int(hours) * 60 * 60 + int(minutes) * 60 + int(seconds))
+    hours, minutes, seconds_with_ms = time_parts
+    if '.' in seconds_with_ms:
+        seconds, milliseconds = seconds_with_ms.split('.')
+    else:
+        seconds = seconds_with_ms
+        milliseconds = '000'
+    if len(milliseconds) > 3:
+        raise ValueError('Milliseconds {} specified with too great '
+                         'granularity. A maximum of three digits is '
+                         'allowed.'.format(milliseconds))
+    total_seconds = int(hours) * 60 * 60 + int(minutes) * 60 + int(seconds)
+    # Pad milliseconds to three digits.
+    remaining_milliseconds = int(milliseconds.ljust(3, '0'))
 
     logger = logging.getLogger(__name__)
-    logger.debug('Parsed %d seconds for time string "%s".', total_seconds,
-                 time_string)
+    logger.debug('Parsed %d seconds and %d milliseconds for time string "%s".',
+                 total_seconds, remaining_milliseconds, time_string)
 
-    return datetime.timedelta(seconds=total_seconds)
+    return datetime.timedelta(seconds=total_seconds,
+                              milliseconds=remaining_milliseconds)
 
 
 def parse_track_string(track):
@@ -109,13 +127,28 @@ def create_cue_sheet(tracks):
     """
     for track_index, (track_time, name, performer) in enumerate(tracks):
         minutes = int(track_time.total_seconds() / 60)
+        # int() rounds down, which is what we want, fractional seconds will be
+        # encapsulated in `frames`.
         seconds = int(track_time.total_seconds() % 60)
+        # Computation:
+        # 1. Get total number of ms.
+        # 2. Get rid of the seconds by taking modulo # of ms per second.
+        # 3. Get # frames with dimensional analysis:
+        #    x ms * 1 s / 1000 ms * 75 frames / s.
+        frames = int(
+            ((track_time / datetime.timedelta(milliseconds=1)) % _MS_PER_SECOND)
+            * _FRAMES_PER_SECOND / _MS_PER_SECOND)
+
+        logger = logging.getLogger(__name__)
+        logger.debug('Parsed %.2d minutes, %.2d seconds, and %.2d frames for '
+                     'track time %.2f.', minutes, seconds, frames,
+                     track_time.total_seconds())
 
         cue_sheet_entry = '''  TRACK {:02} AUDIO
     TITLE {}
     PERFORMER {}
-    INDEX 01 {:02d}:{:02d}:00'''.format(track_index + 1, name, performer, minutes,
-                                        seconds)
+    INDEX 01 {:02d}:{:02d}:{:02d}'''.format(track_index + 1, name, performer, minutes,
+                                        seconds, frames)
         yield cue_sheet_entry
 
 

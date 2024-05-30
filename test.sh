@@ -34,4 +34,19 @@ else
 	((num_tests_failed++))
 fi
 
+python track_list_to_cue_sheet.py testdata/petite_messe_solennelle.tsv \
+	--performer "Wolfgang Sawallisch" \
+	--title "Petite Messe solennelle – Vocal Highlights" --timestamp \
+	--name-index 1 --time-index 0 --performer-index 2 \
+	--audio-file=testdata/petite_messe_solennelle.ogg \
+	--rem "GENRE Classical" "DATE 1972" --no-dummy \
+	| diff - testdata/petite_messe_solennelle.cue
+
+if (( $? == 0 )); then
+	echo "Petite Messe solennelle test success!";
+else
+	echo "Petite Messe solennelle test failed";
+	((num_tests_failed++))
+fi
+
 exit $num_tests_failed
